@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module name="concur"
+        doc:description="This module relies entirely in runtime provided components (no other Plugin dependencies)"
+
+        xmlns="http://www.mulesoft.org/schema/mule/module"
+        xmlns:mule="http://www.mulesoft.org/schema/mule/core"
+        xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+        xmlns:http="http://www.mulesoft.org/schema/mule/http"
+        xmlns:os="http://www.mulesoft.org/schema/mule/os"
+        xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+        xmlns:tns="http://www.mulesoft.org/schema/mule/concur"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+           http://www.mulesoft.org/schema/mule/module http://www.mulesoft.org/schema/mule/module/current/mule-module.xsd
+           http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+           http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+           http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+           http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+           http://www.mulesoft.org/schema/mule/concur http://www.mulesoft.org/schema/mule/concur/current/mule-concur.xsd">
+
+
+    <property name="username" type="string" doc:description="Concur username"/>
+    <property name="password" type="string" doc:description="Concur password or mobile PIN"/>
+    <property name="consumerKey" type="string" doc:description="Concur API key, passed as X-ConsumerKey in HTTP header"/>
+
+    <http:request-config name="concur-http-config" basePath="/api" xmlns:connection="true" >
+        <http:request-connection host="www.concursolutions.com" port="443" protocol="HTTPS"/>
+    </http:request-config>
+
+    <http:request-config name="concur-login-http-config" basePath="/" >
+        <http:request-connection host="www.concursolutions.com" port="443" protocol="HTTPS">
+            <http:authentication >
+                <http:basic-authentication username="#[vars.username]" password="#[vars.password]" />
+            </http:authentication>
+        </http:request-connection>
+    </http:request-config>
+
+    <http:request-config name="concur-logout-http-config" basePath="/" >
+        <http:request-connection host="www.concursolutions.com" port="443" protocol="HTTPS">
+            <!-- we need this configuration to be sure the Authorization header gets written one time -->
+        </http:request-connection>
+    </http:request-config>
+
+    <!--<os:object-store name="os-config" />-->
+
+    <operation name="login">
+        <body>
+            <os:contains key="daKey"/>
+            <mule:choice>
+                <mule:when expression="#[payload == false]">
+                    <http:request config-ref="concur-login-http-config"  method="GET" path="/net2/oauth2/accesstoken.ashx" >
+                        <http:headers ><![CDATA[#[{ "X-ConsumerKey" : vars.consumerKey }]]]></http:headers>
+                    </http:request>
+                    <os:store key="daKey">
+                        <os:value ><![CDATA[#[output application/java --- payload.Access_Token.Token]]]></os:value>
+                    </os:store>
+                </mule:when>
+            </mule:choice>
+            <os:retrieve key="daKey"/>
+            <mule:logger level="DEBUG" message="#['Obtained token -' ++ payload ++ ' -']"/>
+        </body>
+        <output type="string"/>
+    </operation>
+
+    <operation name="logout">
+        <body>
+            <os:contains key="daKey"/>
+            <mule:choice>
+                <mule:when expression="#[payload == true]">
+                    <os:retrieve key="daKey" target="token"/>
+
+                    <http:request config-ref="concur-logout-http-config"  method="POST" path="net2/oauth2/revoketoken.ashx" >
+                        <http:headers ><![CDATA[#[ { "Authorization" : "Oauth " ++ vars.token }]]]></http:headers>
+                        <http:query-params ><![CDATA[#[ { "consumerKey" : vars.consumerKey, "user" : vars.username }]]]></http:query-params>
+                    </http:request>
+                    <os:remove key="daKey"/>
+                </mule:when>
+                <mule:otherwise>
+                    <mule:raise-error type="CONCUR:ALREADY_LOGGED_OUT" description="Already logged out."/>
+                </mule:otherwise>
+            </mule:choice>
+            <mule:set-payload value="#['Success logging out user:' ++ vars.username]"/>
+        </body>
+        <output type="string"/>
+        <errors>
+            <error type="ALREADY_LOGGED_OUT" />
+        </errors>
+    </operation>
+
+    <operation name="get-reports" >
+        <body>
+           <tns:sign-request-and-send method="GET" path="/v3.0/expense/reports"/>
+        </body>
+        <output type="string"/>
+    </operation>
+
+    <operation name="get-report-by-id" >
+        <parameters>
+            <parameter name="reportId" type="string" />
+        </parameters>
+        <body>
+            <tns:sign-request-and-send method="GET" path="#['/v3.0/expense/reports/' ++ vars.reportId]"/>
+        </body>
+        <output type="string"/>
+    </operation>
+
+    <operation name="post-report" >
+        <parameters>
+            <!--<parameter name="report" type="post-report-type"/> until MULE-14162 is done, splitting all parameters-->
+            <parameter name="name" type="string" />
+            <parameter name="userDefinedDate" type="string" example="2017-11-30T00:00:00"/>
+            <parameter name="ownerLoginID" type="string" />
+
+            <!--above parameters should be required, but leaving them as optional to make the calls from the tests easier. -->
+            <parameter name="currencyCode" type="string" defaultValue="ARS"/>
+            <parameter name="country" type="string" defaultValue="AR"/>
+            <parameter name="purpose" type="string" defaultValue="phone expense"/>
+            <parameter name="ownerName" type="string" defaultValue="Juan De los Palotes"/>
+        </parameters>
+        <body>
+            <ee:transform>
+                <ee:message>
+                    <ee:set-payload><![CDATA[
+                    %dw 2.0
+                    output application/json encoding='UTF-8'
+                    ---
+                    {
+                        "Name": vars.name,
+                        "CurrencyCode": vars.currencyCode,
+                        "Country": vars.country,
+                        "Purpose" : vars.purpose,
+                        "UserDefinedDate": vars.userDefinedDate,
+                        "OwnerLoginID": vars.ownerLoginID,
+                        "OwnerName": vars.ownerName
+                    }
+                    ]]></ee:set-payload>
+                </ee:message>
+            </ee:transform>
+            <tns:sign-request-and-send method="POST" path="/v3.0/expense/reports" body="#[payload]"/>
+        </body>
+        <output type="post-generic-result-type::Response" />
+    </operation>
+
+    <operation name="post-entry" >
+        <parameters>
+            <!--<parameter name="report" type="post-entry-type"/> until MULE-14162 is done, splitting all parameters-->
+            <parameter name="reportId" type="string" />
+            <parameter name="transactionDate" type="string" example="2017-11-30T00:00:00"/>
+            <parameter name="transactionAmount" type="number" />
+            <parameter name="ownerLoginID" type="string" />
+
+
+            <!--above parameters should be required, but leaving them as optional to make the calls from the tests easier. -->
+            <parameter name="paymentTypeID" type="string" defaultValue="gWv4Gk6kzh3uoTIIwsBuRmaGud8tL" />
+            <parameter name="transactionCurrencyCode" type="string" defaultValue="ARS" />
+            <parameter name="expenseTypeCode" type="string" defaultValue="CELPH" />
+            <parameter name="currencyCode" type="string" defaultValue="ARS" />
+            <parameter name="description" type="string" defaultValue="phone bill"/>
+            <parameter name="vendorDescription" type="string" defaultValue="cellphone vendor" />
+            <parameter name="comment" type="string" defaultValue="some comment" />
+            <parameter name="ownerName" type="string" defaultValue="Juan de los palotes"/>
+        </parameters>
+        <body>
+            <ee:transform>
+                <ee:message>
+                    <ee:set-payload><![CDATA[
+                    %dw 2.0
+                    output application/json encoding='UTF-8'
+                    ---
+                    {
+                        "ReportID" : vars.reportID,
+                        "TransactionDate": vars.transactionDate,
+                        "TransactionAmount": vars.transactionAmount,
+                        "OwnerLoginID": vars.ownerLoginID,
+
+                        "PaymentTypeID": vars.paymentTypeID,
+                        "TransactionCurrencyCode": vars.transactionCurrencyCode,
+                        "ExpenseTypeCode": vars.expenseTypeCode,
+                        "CurrencyCode": vars.currencyCode,
+                        "Description" : vars.description,
+                        "VendorDescription": vars.vendorDescription,
+                        "Comment": vars.comment,
+                        "OwnerName": vars.ownerName
+                    }
+                    ]]></ee:set-payload>
+                </ee:message>
+            </ee:transform>
+            <tns:sign-request-and-send method="POST" path="/v3.0/expense/entries/" body="#[payload]"/>
+        </body>
+        <output type="post-generic-result-type::Response" />
+    </operation>
+
+    <operation name="get-report-list" >
+        <body>
+            <tns:sign-request-and-send method="GET" path="/expense/expensereport/v1.1/reportslist/"/>
+        </body>
+        <output type="get-report-list-result-type::{http://www.concursolutions.com/api/expense/expensereport/2011/03}ReportsList" />
+    </operation>
+
+    <operation name="submit-report" >
+        <parameters>
+            <parameter name="reportId" type="string" />
+        </parameters>
+        <body>
+            <!--Ugly hack: in order to submit a report we must hit an old API of Concur to obtain the ID in a different format so
+             that we can later perform the submit operation.
+             See: https://forum.developer.concur.com/t/cant-submit-api-v3-report/60/4 -->
+            <tns:get-report-list />
+
+            <ee:transform>
+                <ee:message>
+                    <ee:set-payload><![CDATA[
+                    %dw 2.0
+                    output application/json encoding='UTF-8'
+                    fun getName(data, theId) = (payload.ReportsList.*ReportSummary filter ($.ReportId == theId))[0]
+                    ---
+                    {
+                       calculatedOldReportIdVersion: (getName(payload, vars.reportId)."Report-Details-Url" splitBy "/") [-1],
+                       calculatedOwnerId: getName(payload, vars.reportId).ExpenseUserXUserID
+                    }
+                    ]]></ee:set-payload>
+                </ee:message>
+            </ee:transform>
+
+            <tns:login target="token" />
+            
+            <http:request config-ref="concur-http-config"  method="POST" path="#['/expense/expensereport/v1.1/report/'++ payload.calculatedOldReportIdVersion ++'/submit']" requestStreamingMode="NEVER" >
+                <http:body ><![CDATA[#[ vars.body ]]]></http:body>
+                <http:headers ><![CDATA[#[ { "Authorization" : "Oauth " ++ vars.token, "X_UserID" : payload.calculatedOwnerId }]]]></http:headers>
+            </http:request>
+        </body>
+        <output type="post-generic-result-v1-type::{http://www.concursolutions.com/api/expense/expensereport/2011/03}ReportStatus" />
+    </operation>
+    
+
+    <!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!---->
+    <!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!---->
+    <!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!---->
+    <!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!---->
+    <!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!---->
+    <!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!---->
+
+    <!-- Internals operation, not meant to be used outside this module-->
+    <operation name="sign-request-and-send" >
+        <parameters>
+            <parameter name="method" type="string" />
+            <parameter name="path" type="string" />
+            <parameter name="contentType" type="string" defaultValue="application/json"/>
+            <parameter name="body" type="string" defaultValue="#[' ']" />
+        </parameters>
+        <body>
+            <tns:login target="token" />
+            <http:request config-ref="concur-http-config"  method="#[vars.method]" path="#[vars.path]" requestStreamingMode="NEVER" >
+                <http:body ><![CDATA[#[ vars.body ]]]></http:body>
+                <http:headers ><![CDATA[#[ { "Authorization" : "Oauth " ++ vars.token, "Content-Type" : vars.contentType }]]]></http:headers>
+            </http:request>
+        </body>
+        <output type="string" doc:description="Payload's output"/>
+    </operation>
+
+</module>

@@ -1,0 +1,26 @@
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.concursolutions.com/api/expense/expensereport/2011/03" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="ReportsList">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="ReportSummary" maxOccurs="unbounded" minOccurs="0">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element type="xs:string" name="ReportName"/>
+                            <xs:element type="xs:string" name="ReportId"/>
+                            <xs:element type="xs:string" name="ReportCurrency"/>
+                            <xs:element type="xs:float" name="ReportTotal"/>
+                            <xs:element type="xs:dateTime" name="ReportDate"/>
+                            <xs:element type="xs:string" name="LastComment"/>
+                            <xs:element type="xs:string" name="Report-Details-Url"/>
+                            <xs:element type="xs:string" name="Report-Full-Details-Url"/>
+                            <xs:element type="xs:string" name="ExpenseUserXUserID"/>
+                            <xs:element type="xs:string" name="ApproverXUserID"/>
+                            <xs:element type="xs:string" name="EmployeeName"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>
+

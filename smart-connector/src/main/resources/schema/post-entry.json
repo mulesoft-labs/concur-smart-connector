@@ -1,0 +1,48 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$id": "http://concur.com/entry.json",
+  "type": "object",
+  "properties": {
+    "ReportID": {
+      "$id": "/properties/ReportID",
+      "type": "string",
+      "title": "The Reportid Schema.",
+      "description": "An explanation about the purpose of this instance.",
+      "default": "",
+      "examples": [
+        "E255F9C6563B4ED5B66B"
+      ]
+    },
+    "TransactionDate": {
+      "$id": "/properties/TransactionDate",
+      "type": "string",
+      "title": "The Transactiondate Schema.",
+      "description": "An explanation about the purpose of this instance.",
+      "default": "",
+      "examples": [
+        "2017-12-01T00:00:00"
+      ]
+    },
+    "TransactionAmount": {
+      "$id": "/properties/TransactionAmount",
+      "type": "integer",
+      "title": "The Transactionamount Schema.",
+      "description": "An explanation about the purpose of this instance.",
+      "default": 0,
+      "examples": [
+        501
+      ]
+    },
+    "OwnerLoginID": {
+      "$id": "/properties/OwnerLoginID",
+      "type": "string",
+      "title": "The Ownerloginid Schema.",
+      "description": "An explanation about the purpose of this instance.",
+      "default": "",
+      "examples": [
+        "evaklo@gmail.com"
+      ]
+    }
+  }
+}

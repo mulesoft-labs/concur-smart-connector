@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.mule.extensions.concur</groupId>
+    <artifactId>concur-smart-connector-parent</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+
+    <name>Parent POM Concur Smart Connector and Mule App integration test</name>
+    <packaging>pom</packaging>
+    <description>A Smart Connector project used to create a Smart Connector and a mule application to try it out with MUnit.</description>
+ 
+    <properties>
+        <!-- Smart Connector properties-->
+        <mule.version>4.0.0</mule.version>
+        <mule.extensions.maven.plugin.version>1.0.0</mule.extensions.maven.plugin.version>
+
+        <!-- Smart Connector IT dependnecies-->
+        <mule.maven.plugin.version>3.0.0</mule.maven.plugin.version>
+        <munit.maven.plugin.version>2.0.0</munit.maven.plugin.version>
+        <munit.runtime.version>2.0.0</munit.runtime.version>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>mulesoft-releases</id>
+            <name>MuleSoft Releases Repository</name>
+            <url>http://repository.mulesoft.org/releases/</url>
+            <layout>default</layout>
+        </repository>
+        <repository>
+            <id>mulesoft-snapshots</id>
+            <name>MuleSoft Snapshots Repository</name>
+            <url>https://repository.mulesoft.org/snapshots/</url>
+            <layout>default</layout>
+        </repository>
+    </repositories>
+    
+  <modules>
+    <module>smart-connector</module>
+    <module>smart-connector-it</module>
+  </modules>
+</project>

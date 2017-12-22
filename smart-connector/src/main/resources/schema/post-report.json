@@ -1,0 +1,49 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$id": "http://concur.com/post-report.json",
+  "type": "object",
+  "properties": {
+    "Name": {
+      "$id": "/properties/Name",
+      "type": "string",
+      "title": "The Name Schema.",
+      "description": "An explanation about the purpose of this instance.",
+      "default": "",
+      "examples": [
+        "Test 100"
+      ]
+    },
+    "UserDefinedDate": {
+      "$id": "/properties/UserDefinedDate",
+      "type": "string",
+      "title": "The Userdefineddate Schema.",
+      "description": "An explanation about the purpose of this instance.",
+      "default": "",
+      "examples": [
+        "2017-11-30T00:00:00"
+      ]
+    },
+    "OwnerLoginID": {
+      "$id": "/properties/OwnerLoginID",
+      "type": "string",
+      "title": "The Ownerloginid Schema.",
+      "description": "An explanation about the purpose of this instance.",
+      "default": "",
+      "examples": [
+        "evaklo@gmail.com"
+      ]
+    },
+    "OwnerName": {
+      "$id": "/properties/OwnerName",
+      "type": "string",
+      "title": "The Ownername Schema.",
+      "description": "An explanation about the purpose of this instance.",
+      "default": "",
+      "examples": [
+        "Juan de los palotes"
+      ]
+    }
+  }
+}
+

@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:munit="http://www.mulesoft.org/schema/mule/munit"
+      xmlns:munitext="http://www.mulesoft.org/schema/mule/munit-tools"
+      xmlns="http://www.mulesoft.org/schema/mule/core"
+      xsi:schemaLocation="
+        http://www.mulesoft.org/schema/mule/core      http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/munit     http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+        http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+
+    <munit:config name="assertion-test.xml"/>
+
+    <munit:test name="test-login" description="">
+        <munit:execution>
+            <flow-ref name="login-flow" />
+        </munit:execution>
+        <munit:validation>
+            <munitext:assert-that expression="#[output application/java --- payload]" is="#[MunitTools::notNullValue()]" message="Should have not been null"/>
+        </munit:validation>
+    </munit:test>
+
+    <munit:test name="test-logout-without-login" description="" expectedErrorType="CONCUR:ALREADY_LOGGED_OUT" >
+        <munit:execution>
+            <flow-ref name="logout-flow" />
+            <!-- the second call to logout makes sense if any other test have been executed where a valid login was stored in the connector,
+            thus we need to force a second (and unsuccessful) logout to show the CONCUR:ALREADY_LOGGED_OUT error-->
+            <flow-ref name="logout-flow" />
+            <munitext:fail message="Should not have reached this point."/>
+        </munit:execution>
+    </munit:test>
+
+    <munit:test name="test-logout-with-login" description="">
+        <munit:execution>
+            <flow-ref name="login-flow" />
+            <flow-ref name="logout-flow" />
+        </munit:execution>
+        <munit:validation>
+            <munitext:assert-that expression="#[output application/java --- payload]" is="#[MunitTools::equalTo('Success logging out user:evaklo@gmail.com')]" message="Should have not be zero"/>
+        </munit:validation>
+    </munit:test>
+
+    <munit:test name="test-get-reports" description="">
+        <munit:execution>
+            <flow-ref name="get-reports-flow" />
+        </munit:execution>
+        <munit:validation>
+            <munitext:assert-that expression="#[output application/java --- payload.Reports]" is="#[MunitTools::notNullValue()]" message="Should have not been null"/>
+            <munitext:assert-that expression="#[output application/java --- sizeOf(payload.Reports.Items) > 0]" is="#[MunitTools::equalTo(true)]" message="Should have not be zero"/>
+        </munit:validation>
+    </munit:test>
+
+    <munit:test name="test-post-report" description="">
+        <munit:execution>
+            <flow-ref name="post-report-flow" />
+        </munit:execution>
+        <munit:validation>
+            <munitext:assert-that expression="#[output application/java --- payload.Response]" is="#[MunitTools::notNullValue()]" message="Should have not been null"/>
+            <munitext:assert-that expression="#[output application/java --- payload.Response.ID]" is="#[MunitTools::notNullValue()]" message="Should have not been null"/>
+        </munit:validation>
+    </munit:test>
+
+    <munit:test name="test-get-report-by-id" description="">
+        <munit:execution>
+            <flow-ref name="post-report-flow" />
+            <set-variable variableName="reportID" value="#[output application/java --- payload.Response.ID]"/>
+            <logger level="DEBUG" message="#['Obtained reportID -' ++ vars.reportID ++ ' -']"/>
+            <flow-ref name="get-report-by-id-flow" />
+        </munit:execution>
+        <munit:validation>
+            <!--check for post of report-->
+            <munitext:assert-that expression="#[output application/java --- vars.reportID]" is="#[MunitTools::notNullValue()]" message="Should have not been null"/>
+            <!--check for the recently created post of the report do exists by the ID-->
+            <munitext:assert-that expression="#[output application/java --- payload.Report]" is="#[MunitTools::notNullValue()]" message="Should have not been null"/>
+            <munitext:assert-that expression="#[output application/java --- payload.Report.ID]" is="#[MunitTools::notNullValue()]" message="Should have not been null"/>
+            <munitext:assert-that expression="#[output application/java --- payload.Report.ApprovalStatusCode]" is="#[MunitTools::equalTo('A_NOTF')]" message="Should have been 'A_NOTF'"/>
+        </munit:validation>
+    </munit:test>
+
+    <munit:test name="test-post-entry" description="">
+        <munit:execution>
+            <flow-ref name="post-entry-flow" />
+        </munit:execution>
+        <munit:validation>
+            <munitext:assert-that expression="#[output application/java --- payload.Response]" is="#[MunitTools::notNullValue()]" message="Should have not been null"/>
+            <munitext:assert-that expression="#[output application/java --- payload.Response.ID]" is="#[MunitTools::notNullValue()]" message="Should have not been null"/>
+        </munit:validation>
+    </munit:test>
+
+    <munit:test name="test-get-report-list-flow" description="">
+        <munit:execution>
+            <flow-ref name="get-report-list-flow" />
+            <set-variable variableName="reportListFirstCall" value="#[payload]"/>
+
+            <flow-ref name="post-report-flow" />
+            <set-variable variableName="postReportCall" value="#[payload]"/>
+
+            <flow-ref name="get-report-list-flow" />
+            <set-variable variableName="reportListSecondCall" value="#[payload]"/>
+        </munit:execution>
+        <munit:validation>
+            <!-- first check to see if calls executes properly -->
+            <munitext:assert-that expression="#[output application/java --- vars.reportListFirstCall]" is="#[MunitTools::notNullValue()]" message="Should have not been null"/>
+            <munitext:assert-that expression="#[output application/java --- vars.reportListFirstCall.ReportsList]" is="#[MunitTools::notNullValue()]" message="Should have not been null"/>
+            <!-- add new report -->
+            <munitext:assert-that expression="#[output application/java --- vars.postReportCall.Response]" is="#[MunitTools::notNullValue()]" message="Should have not been null"/>
+            <munitext:assert-that expression="#[output application/java --- vars.postReportCall.Response.ID]" is="#[MunitTools::notNullValue()]" message="Should have not been null"/>
+            <!-- we validate the report was created by seeing the amount of reports and then if the ID does match -->
+            <munitext:assert-that expression="#[output application/java --- vars.reportListSecondCall]" is="#[MunitTools::notNullValue()]" message="Should have not been null"/>
+            <munitext:assert-that expression="#[output application/java --- vars.reportListSecondCall.ReportsList]" is="#[MunitTools::notNullValue()]" message="Should have not been null"/>
+            <munitext:assert-that expression="#[output application/java --- sizeOf(vars.reportListSecondCall.ReportsList)]" is="#[MunitTools::equalTo( sizeOf(vars.reportListFirstCall.ReportsList) + 1)]" message="Amount of reports should have increased"/>
+            <munitext:assert-that expression="#[output application/java --- (vars.reportListSecondCall.ReportsList.*ReportSummary filter ($.ReportId == vars.postReportCall.Response.ID ))[0].ReportId]" is="#[MunitTools::notNullValue()]" message="Recently created ID is missing"/>
+        </munit:validation>
+    </munit:test>
+
+    <munit:test name="test-submit-report-flow" description="">
+        <munit:execution>
+            <!-- creation of the report -->
+            <flow-ref name="post-report-flow" />
+            <set-variable variableName="reportID" value="#[output application/java --- payload.Response.ID]"/>
+            <logger level="DEBUG" message="#['Obtained reportID -' ++ vars.reportID ++ ' -']"/>
+            <!-- calling the reports list to store the current state of the recently created report before submitting-->
+            <flow-ref name="get-report-by-id-flow" />
+            <set-variable variableName="storedApprovalStatusCodeFirstCall" value="#[output application/java --- payload.Report.ApprovalStatusCode]"/>
+            <logger level="DEBUG" message="#['Obtained storedApprovalStatusCodeFirstCall -' ++ vars.storedApprovalStatusCodeFirstCall ++ ' -']"/>
+            <!-- submitting the report to then storing the response -->
+            <flow-ref name="submit-report-flow" />
+            <set-variable variableName="submitResponseCall" value="#[payload]"/>
+            <!-- calling the reports list to store the current state of the report after being submitted -->
+            <flow-ref name="get-report-by-id-flow" />
+            <set-variable variableName="storedApprovalStatusCodeSecondCall" value="#[output application/java --- payload.Report.ApprovalStatusCode]"/>
+            <logger level="DEBUG" message="#['Obtained storedApprovalStatusCodeSecondCall -' ++ vars.storedApprovalStatusCodeSecondCall ++ ' -']"/>
+        </munit:execution>
+        <munit:validation>
+            <munitext:assert-that expression="#[output application/java --- vars.reportID]" is="#[MunitTools::notNullValue()]" message="Should have not been null reportID"/>
+            <munitext:assert-that expression="#[output application/java --- vars.storedApprovalStatusCodeFirstCall]" is="#[MunitTools::notNullValue()]" message="Should have not been null storedApprovalStatusCodeFirstCall"/>
+            <munitext:assert-that expression="#[output application/java --- vars.storedApprovalStatusCodeFirstCall]" is="#[MunitTools::equalTo('A_NOTF')]" message="Should have been 'A_NOTF'"/>
+
+            <munitext:assert-that expression="#[output application/java --- vars.submitResponseCall]" is="#[MunitTools::notNullValue()]" message="Should have not been null submitResponseCall"/>
+            <munitext:assert-that expression="#[output application/java --- vars.submitResponseCall.ReportStatus.Status]" is="#[MunitTools::equalTo('SUCCESS')]" message="Should have be 'SUCCESS'"/>
+
+            <munitext:assert-that expression="#[output application/java --- vars.storedApprovalStatusCodeSecondCall]" is="#[MunitTools::notNullValue()]" message="Should have not been null storedApprovalStatusCodeSecondCall"/>
+            <munitext:assert-that expression="#[output application/java --- vars.storedApprovalStatusCodeSecondCall]" is="#[MunitTools::equalTo('A_PEND')]" message="Should have been 'A_PEND'"/>
+        </munit:validation>
+    </munit:test>
+
+</mule>

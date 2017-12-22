@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalogs xmlns="http://www.mulesoft.org/schema/mule/types" >
+
+    <catalog name="post-report-type" format="application/json">
+        <schema format="application/json+schema" location="./schema/post-report.json" />
+    </catalog>
+
+    <catalog name="post-entry-type" format="application/json">
+        <schema format="application/json+schema" location="./schema/post-entry.json" />
+    </catalog>
+
+    <catalog name="post-generic-result-type" format="application/xml">
+        <schema format="application/xml+schema" location="./schema/post-generic-result.xsd" />
+    </catalog>
+
+
+    <catalog name="post-generic-result-v1-type" format="application/xml">
+        <schema format="application/xml+schema" location="./schema/post-generic-result-v1.xsd" />
+    </catalog>
+
+    <catalog name="get-report-list-result-type" format="application/xml">
+        <schema format="application/xml+schema" location="./schema/get-report-list-result.xsd" />
+    </catalog>
+
+</catalogs>

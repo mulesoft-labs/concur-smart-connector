@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+	  xmlns:concur="http://www.mulesoft.org/schema/mule/concur"
+	  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	  xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/concur http://www.mulesoft.org/schema/mule/concur/current/mule-concur.xsd">
+
+    <configuration-properties file="automation-credentials.properties"/>
+    
+	<concur:config name="concur" username="${config.username}" password="${config.password}" consumerKey="${config.consumerKey}" />
+
+	<flow name="login-flow">
+		<concur:login config-ref="concur"/>
+	</flow>
+
+	<flow name="logout-flow">
+		<concur:logout config-ref="concur"/>
+	</flow>
+
+	<flow name="get-reports-flow">
+		<concur:get-reports config-ref="concur"/>
+	</flow>
+
+	<flow name="post-report-flow">
+		<concur:post-report config-ref="concur" name="Test_post-report-flow" userDefinedDate="2017-11-30T00:00:00" ownerLoginID="evaklo@gmail.com" />
+	</flow>
+
+    <flow name="get-report-by-id-flow">
+		<concur:get-report-by-id config-ref="concur" reportId="#[vars.reportID]" />
+	</flow>
+
+	<flow name="post-entry-flow">
+		<concur:post-report config-ref="concur" name="Test_post-entry-flow" userDefinedDate="2017-11-30T00:00:00" ownerLoginID="evaklo@gmail.com" />
+		<concur:post-entry config-ref="concur" reportId="#[output application/java --- payload.Response.ID]" transactionDate="2017-11-30T00:00:00" transactionAmount="400" ownerLoginID="evaklo@gmail.com" />
+	</flow>
+
+	<flow name="get-report-list-flow">
+		<concur:get-report-list config-ref="concur" />
+	</flow>
+
+	<flow name="submit-report-flow">
+		<concur:post-entry config-ref="concur" reportId="#[vars.reportID]" transactionDate="2017-11-30T00:00:00" transactionAmount="15" ownerLoginID="evaklo@gmail.com" />
+		<concur:submit-report config-ref="concur" reportId="#[vars.reportID]" />
+	</flow>
+
+</mule>
