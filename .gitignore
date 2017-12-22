@@ -30,3 +30,15 @@ hostkey.ser
 *.h2.db
 *.factorypath
 
+
+
+# Credential file for individual developer
+# which should NOT be committed
+my-cred.properties
+automation-credentials.properties
+concur-config.properties
+interop-testdata-override.xml
+interop-testdata.xml
+muleLicenseKey.lic
+*.log
+
