@@ -58,6 +58,13 @@ The syntax to run a single test is
       mvn clean test -Dmunit.test=assertion-munit-test.xml#test-post-entry
       mvn clean test -Dmunit.test=assertion-munit-test.xml#test-get-report-list-flow
       mvn clean test -Dmunit.test=assertion-munit-test.xml#test-submit-report-flow
+#### Debugging the tests
+If some test fails, enable the logs under `[..]/concur-smart-connector/smart-connector-it/src/main/test/log4j2-test.xml` to see what's being sent to the Concur's API and what's coming back from it by uncommenting the following lines:
+ 
+     <AsyncLogger name="org.mule.service.http" level="DEBUG"/>
+     <AsyncLogger name="org.mule.extension.http" level="DEBUG"/>
+     
+Notice that enabling these logs will make the `test-post-receipt` test show some weird stack in the console as an image will be sent to the API through a POST request, causing the terminal go nuts due to the weird characters. 
       
 ********
 ### Missing features
