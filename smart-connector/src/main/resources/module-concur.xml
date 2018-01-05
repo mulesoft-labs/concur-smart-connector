@@ -41,7 +41,10 @@
         </http:request-connection>
     </http:request-config>
 
-    <!--<os:object-store name="os-config" />-->
+    <!-- can't use the 'os-config' in MUnit test environment until MU-1309/MULE-14335 gets done, works in the runtime though..
+    Once fixed, not only the following element must be uncommented, but also all references to OS must be linked to
+    the 'os-config' element!!!-->
+    <!--<os:object-store name="os-config"/>-->
 
     <operation name="login">
         <body>
@@ -149,7 +152,6 @@
             <parameter name="transactionAmount" type="number" />
             <parameter name="ownerLoginID" type="string" />
 
-
             <!--above parameters should be required, but leaving them as optional to make the calls from the tests easier. -->
             <parameter name="paymentTypeID" type="string" defaultValue="gWv4Gk6kzh3uoTIIwsBuRmaGud8tL" />
             <parameter name="transactionCurrencyCode" type="string" defaultValue="ARS" />
@@ -186,6 +188,26 @@
                 </ee:message>
             </ee:transform>
             <tns:sign-request-and-send method="POST" path="/v3.0/expense/entries/" body="#[payload]"/>
+        </body>
+        <output type="post-generic-result-type::Response" />
+    </operation>
+
+    <operation name="post-receipt" >
+        <parameters>
+            <parameter name="entryID" type="string" />
+            <parameter name="contentType" type="string" defaultValue="image/jpeg" example="image/jpeg"/>
+            <parameter name="image" type="binary" role="PRIMARY"/>
+        </parameters>
+        <body>
+            <!-- Ugly hack: despite the API does support uploading images, the linkage of an image to an existing entry does not work
+            and the developer forum, neither their documentation site, seems to be helpful. The workaround is to directly push the
+            receipt to an existing entry, which involves doing the upload+linkage ¯\_(ツ)_/¯
+            See: https://forum.developer.concur.com/t/attach-receipt-to-entry/1516 -->
+            <tns:login target="token" />
+            <http:request config-ref="concur-http-config"  method="POST" path="#['/image/v1.0/expenseentry/' ++ vars.entryID]" requestStreamingMode="NEVER" >
+                <http:body ><![CDATA[#[ vars.image ]]]></http:body>
+                <http:headers ><![CDATA[#[ { "Authorization" : "Oauth " ++ vars.token, "Content-Type" : vars.contentType }]]]></http:headers>
+            </http:request>
         </body>
         <output type="post-generic-result-type::Response" />
     </operation>
@@ -240,7 +262,7 @@
     <!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!---->
     <!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!---->
 
-    <!-- Internals operation, not meant to be used outside this module-->
+    <!-- Internals operation, not meant to be used outside this module. relies on https://www.mulesoft.org/jira/browse/MULE-14385 -->
     <operation name="sign-request-and-send" >
         <parameters>
             <parameter name="method" type="string" />

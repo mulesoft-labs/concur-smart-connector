@@ -21,6 +21,11 @@
         <munit.runtime.version>2.0.0</munit.runtime.version>
     </properties>
 
+    <modules>
+        <module>smart-connector</module>
+        <module>smart-connector-it</module>
+    </modules>
+    
     <repositories>
         <repository>
             <id>mulesoft-releases</id>
@@ -35,9 +40,4 @@
             <layout>default</layout>
         </repository>
     </repositories>
-    
-  <modules>
-    <module>smart-connector</module>
-    <module>smart-connector-it</module>
-  </modules>
 </project>

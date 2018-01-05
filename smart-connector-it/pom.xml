@@ -12,6 +12,10 @@
 	<name>Concur Smart Connector Mule Application Integration Test</name>
 	<description>A Mule application used to test the Smart Connector</description>
 
+    <properties>
+        <mule.file.connector>1.0.0</mule.file.connector>
+    </properties>
+
 	<build>
 		<plugins>
 			<!-- Mule Application packager plugin -->
@@ -44,13 +48,13 @@
 					<environmentVariables>
 						<MY_ENV>envVar</MY_ENV>
 					</environmentVariables>
-										<!--<argLines>-->
-										<!--&lt;!&ndash; To debug the runtime through MUnit &ndash;&gt;-->
-										<!--<debugger.argline>-agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=y</debugger.argline>-->
-										<!--<argLine>-Djava.library.path=lib/</argLine>-->
-										<!--<argLine>-Xmx8192m</argLine>-->
-										<!--<argLine>-XX:-UseGCOverheadLimit</argLine>-->
-										<!--</argLines>-->
+                    <!--<argLines>-->
+                        <!--&lt;!&ndash; To debug the runtime through MUnit &ndash;&gt;-->
+                        <!--<debugger.argline>-agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=y</debugger.argline>-->
+                        <!--<argLine>-Djava.library.path=lib/</argLine>-->
+                        <!--<argLine>-Xmx8192m</argLine>-->
+                        <!--<argLine>-XX:-UseGCOverheadLimit</argLine>-->
+                    <!--</argLines>-->
 				</configuration>
 			</plugin>
 		</plugins>
@@ -73,6 +77,13 @@
 			<scope>test</scope>
 			<type>pom</type>
 		</dependency>
+        <dependency>
+            <groupId>org.mule.connectors</groupId>
+            <artifactId>mule-file-connector</artifactId>
+            <version>${mule.file.connector}</version>
+            <scope>compile</scope>
+            <classifier>mule-plugin</classifier>
+        </dependency>
 	</dependencies>
 
 </project>

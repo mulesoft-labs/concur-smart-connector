@@ -5,36 +5,12 @@
             <PatternLayout pattern="%-5p %d [%t] %c: %m%n"/>
         </Console>
     </Appenders>
-
     <Loggers>
-
-        <!--<Logger name="org.mule.api.processor.LoggerMessageProcessor" level="DEBUG"/>-->
-
+        <!-- the following logs must be disabled due to https://www.mulesoft.org/jira/browse/MU-1315 to run POST with binaries
+        files, such as the test under assertion-munit-test.xml#test-post-receipt -->
         <!-- Http Logger shows wire traffic on DEBUG. -->
-        <AsyncLogger name="org.mule.service.http" level="DEBUG"/>
-        <AsyncLogger name="org.mule.extension.http" level="DEBUG"/>
-
-
-
-        <!-- CXF is used heavily by Mule for web services -->
-        <AsyncLogger name="org.apache.cxf" level="WARN"/>
-
-        <!-- Apache Commons tend to make a lot of noise which can clutter the log-->
-        <AsyncLogger name="org.apache" level="WARN"/>
-
-        <!-- Reduce startup noise -->
-        <AsyncLogger name="org.springframework.beans.factory" level="WARN"/>
-
-        <!-- Mule classes -->
-        <AsyncLogger name="org.mule" level="INFO"/>
-        <AsyncLogger name="com.mulesoft" level="INFO"/>
-
-        <!-- Reduce DM verbosity -->
-        <AsyncLogger name="org.jetel" level="WARN"/>
-        <AsyncLogger name="Tracking" level="WARN"/>
-        
-        <!--AsyncLogger name="httpclient.wire" level="ALL" /-->
-
+        <!--<AsyncLogger name="org.mule.service.http" level="DEBUG"/>-->
+        <!--<AsyncLogger name="org.mule.extension.http" level="DEBUG"/>-->
         <AsyncRoot level="INFO">
             <AppenderRef ref="Console"/>
         </AsyncRoot>

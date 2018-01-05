@@ -2,13 +2,20 @@
 
 <mule xmlns="http://www.mulesoft.org/schema/mule/core"
 	  xmlns:concur="http://www.mulesoft.org/schema/mule/concur"
+	  xmlns:file="http://www.mulesoft.org/schema/mule/file"
 	  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	  xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-		http://www.mulesoft.org/schema/mule/concur http://www.mulesoft.org/schema/mule/concur/current/mule-concur.xsd">
+		http://www.mulesoft.org/schema/mule/concur http://www.mulesoft.org/schema/mule/concur/current/mule-concur.xsd
+        http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
 
     <configuration-properties file="automation-credentials.properties"/>
     
 	<concur:config name="concur" username="${config.username}" password="${config.password}" consumerKey="${config.consumerKey}" />
+
+    <!-- needed config to access the context of the app while testing it -->
+    <file:config name="file-test-config">
+        <file:connection workingDir="${app.home}"/>
+    </file:config>
 
 	<flow name="login-flow">
 		<concur:login config-ref="concur"/>
@@ -33,6 +40,16 @@
 	<flow name="post-entry-flow">
 		<concur:post-report config-ref="concur" name="Test_post-entry-flow" userDefinedDate="2017-11-30T00:00:00" ownerLoginID="evaklo@gmail.com" />
 		<concur:post-entry config-ref="concur" reportId="#[output application/java --- payload.Response.ID]" transactionDate="2017-11-30T00:00:00" transactionAmount="400" ownerLoginID="evaklo@gmail.com" />
+	</flow>
+
+    <flow name="post-receipt-flow">
+        <file:read config-ref="file-test-config" path="mulesoft-logo-test.jpg" target="daImage"/>
+        <concur:post-report config-ref="concur" name="Test_post-receipt-flow" userDefinedDate="2017-11-30T00:00:00" ownerLoginID="evaklo@gmail.com" />
+        <concur:post-entry config-ref="concur" reportId="#[output application/java --- payload.Response.ID]" transactionDate="2017-11-30T00:00:00" transactionAmount="400" ownerLoginID="evaklo@gmail.com" />
+
+        <concur:post-receipt config-ref="concur" entryID="#[output application/java --- payload.Response.ID]" contentType="image/jpeg" >
+            <concur:image>#[vars.daImage]</concur:image>
+        </concur:post-receipt>
 	</flow>
 
 	<flow name="get-report-list-flow">

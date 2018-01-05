@@ -11,6 +11,7 @@
 
     <munit:config name="assertion-test.xml"/>
 
+    <!-- All [munit:test .. description=""] are empty due to https://www.mulesoft.org/jira/browse/MU-1316 -->
     <munit:test name="test-login" description="">
         <munit:execution>
             <flow-ref name="login-flow" />
@@ -84,6 +85,16 @@
         <munit:validation>
             <munitext:assert-that expression="#[output application/java --- payload.Response]" is="#[MunitTools::notNullValue()]" message="Should have not been null"/>
             <munitext:assert-that expression="#[output application/java --- payload.Response.ID]" is="#[MunitTools::notNullValue()]" message="Should have not been null"/>
+        </munit:validation>
+    </munit:test>
+
+    <munit:test name="test-post-receipt" description="">
+        <munit:execution>
+            <flow-ref name="post-receipt-flow" />
+        </munit:execution>
+        <munit:validation>
+            <munitext:assert-that expression="#[output application/java --- payload.Image]" is="#[MunitTools::notNullValue()]" message="Should have not been null image"/>
+            <munitext:assert-that expression="#[output application/java --- payload.Image.Id]" is="#[MunitTools::notNullValue()]" message="Should have not been null ID for the uploaded image"/>
         </munit:validation>
     </munit:test>
 
